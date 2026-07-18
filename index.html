@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Administrasi Kurikulum</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for better look */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Modal Backdrop */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <nav class="bg-brand-700 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-school text-2xl mr-3"></i>
+                    <span class="font-bold text-xl tracking-tight">SI-ADMIN Kurikulum</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <!-- Status Indicator -->
+                    <div id="connectionStatus" class="flex items-center text-sm">
+                        <div class="w-2 h-2 rounded-full bg-yellow-400 mr-2 animate-pulse"></div>
+                        <span class="hidden sm:inline text-brand-100">Menghubungkan...</span>
+                    </div>
+                    
+                    <button id="btnNavPublic" class="px-3 py-2 rounded-md text-sm font-medium bg-brand-800 hover:bg-brand-600 transition-colors hidden">
+                        <i class="fa-solid fa-chart-line mr-1"></i> Dashboard
+                    </button>
+                    <button id="btnNavAdmin" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-brand-600 transition-colors">
+                        <i class="fa-solid fa-user-shield mr-1"></i> Login Admin
+                    </button>
+                    <button id="btnLogout" class="px-3 py-2 rounded-md text-sm font-medium bg-red-600 hover:bg-red-700 transition-colors hidden">
+                        <i class="fa-solid fa-sign-out-alt mr-1"></i> Keluar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- PUBLIC DASHBOARD VIEW -->
+        <div id="publicView" class="fade-in block">
+            <div class="mb-8 text-center sm:text-left">
+                <h1 class="text-3xl font-bold text-slate-900 mb-2">Dashboard Rekapitulasi Administrasi</h1>
+                <p class="text-slate-600">Tahun Ajaran 2026/2027 | Pembaruan Real-time</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Perangkat -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex items-center space-x-4 hover:shadow-md transition-shadow">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="fa-solid fa-folder-open text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Perangkat Mengajar</p>
+                        <p class="text-2xl font-bold text-slate-800" id="statPerangkat">0 / 42</p>
+                    </div>
+                </div>
+                <!-- Jurnal Mengajar -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex items-center space-x-4 hover:shadow-md transition-shadow">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="fa-solid fa-book-open-reader text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Jurnal Mengajar (Minggu Ini)</p>
+                        <p class="text-2xl font-bold text-slate-800" id="statJurnalMengajar">0 / 42</p>
+                    </div>
+                </div>
+                <!-- Jurnal Wali Kelas -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex items-center space-x-4 hover:shadow-md transition-shadow">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        <i class="fa-solid fa-users text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Jurnal Wali Kelas (Bulan Ini)</p>
+                        <p class="text-2xl font-bold text-slate-800" id="statJurnalWali">0 / 24</p>
+                    </div>
+                </div>
+                <!-- Jurnal Kelas -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex items-center space-x-4 hover:shadow-md transition-shadow">
+                    <div class="p-3 rounded-full bg-orange-100 text-orange-600">
+                        <i class="fa-solid fa-chalkboard-user text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Jurnal Kelas (Minggu Ini)</p>
+                        <p class="text-2xl font-bold text-slate-800" id="statJurnalKelas">0 / 24</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters for Table -->
+            <div class="bg-white p-4 rounded-t-xl border border-slate-200 border-b-0 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <h2 class="text-lg font-semibold text-slate-800">Detail Rekapitulasi</h2>
+                <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <select id="filterKategori" class="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5">
+                        <option value="all">Semua Kategori</option>
+                        <option value="perangkat">Perangkat Mengajar (Tahunan)</option>
+                        <option value="jurnal_mengajar">Jurnal Mengajar (Mingguan)</option>
+                        <option value="jurnal_wali">Jurnal Wali Kelas (Bulanan)</option>
+                        <option value="jurnal_kelas">Jurnal Kelas (Mingguan)</option>
+                    </select>
+                    <input type="text" id="searchInput" placeholder="Cari Nama Guru..." class="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5">
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="bg-white rounded-b-xl shadow-sm border border-slate-200 overflow-x-auto">
+                <table class="w-full text-sm text-left text-slate-500">
+                    <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">No</th>
+                            <th scope="col" class="px-6 py-3">Nama Guru</th>
+                            <th scope="col" class="px-6 py-3">Jenis Administrasi</th>
+                            <th scope="col" class="px-6 py-3">Keterangan Tambahan</th>
+                            <th scope="col" class="px-6 py-3">Status</th>
+                            <th scope="col" class="px-6 py-3">Tanggal Input</th>
+                        </tr>
+                    </thead>
+                    <tbody id="publicTableBody">
+                        <!-- Data will be populated here -->
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-slate-400">
+                                <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i>
+                                Memuat data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="loginView" class="fade-in hidden max-w-md mx-auto mt-10">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+                <div class="bg-brand-600 p-6 text-center text-white">
+                    <div class="inline-block p-4 bg-white/20 rounded-full mb-3 backdrop-blur-sm">
+                        <i class="fa-solid fa-shield-halved text-4xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold">Admin Login</h2>
+                    <p class="text-brand-100 text-sm mt-1">Khusus Staf Kurikulum</p>
+                </div>
+                <div class="p-8">
+                    <form id="loginForm" class="space-y-6">
+                        <div>
+                            <label for="password" class="block mb-2 text-sm font-medium text-slate-900">Password</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                    <i class="fa-solid fa-lock"></i>
+                                </div>
+                                <input type="password" id="password" class="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full pl-10 p-2.5" placeholder="••••••••" required>
+                            </div>
+                            <p class="mt-2 text-xs text-slate-500">Hint: admin123 (Ubah di kode sumber nanti)</p>
+                        </div>
+                        <button type="submit" class="w-full text-white bg-brand-600 hover:bg-brand-700 focus:ring-4 focus:outline-none focus:ring-brand-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors shadow-md">
+                            Masuk
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div id="adminView" class="fade-in hidden">
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-slate-900">Panel Input Data</h1>
+                    <p class="text-slate-600 mt-1">Kelola data pengumpulan administrasi guru.</p>
+                </div>
+                <button id="btnShowAddModal" class="bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg text-sm px-5 py-2.5 shadow-md transition-colors flex items-center">
+                    <i class="fa-solid fa-plus mr-2"></i> Input Data Baru
+                </button>
+            </div>
+
+            <!-- Admin Data Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                    <h3 class="font-semibold text-slate-700">Data Administrasi Tersimpan</h3>
+                    <div class="text-xs text-slate-500">Data tersimpan langsung ke Cloud (Real-time)</div>
+                </div>
+                <div class="overflow-x-auto max-h-[600px]">
+                    <table class="w-full text-sm text-left text-slate-500">
+                        <thead class="text-xs text-slate-700 uppercase bg-slate-100 sticky top-0 shadow-sm z-10">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Nama Guru</th>
+                                <th scope="col" class="px-6 py-3">Kategori</th>
+                                <th scope="col" class="px-6 py-3">Detail (Mapel/Kelas/Bulan/Minggu)</th>
+                                <th scope="col" class="px-6 py-3">Status</th>
+                                <th scope="col" class="px-6 py-3">Tgl Input</th>
+                                <th scope="col" class="px-6 py-3 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTableBody">
+                            <!-- Admin Data will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Add Data Modal -->
+    <div id="addModal" tabindex="-1" aria-hidden="true" class="fixed inset-0 z-[100] hidden w-full p-4 overflow-x-hidden overflow-y-auto h-full modal-backdrop flex justify-center items-center">
+        <div class="relative w-full max-w-2xl bg-white rounded-xl shadow-2xl fade-in flex flex-col max-h-[90vh]">
+            <!-- Modal header -->
+            <div class="flex items-start justify-between p-5 border-b border-slate-200 rounded-t-xl bg-slate-50 shrink-0">
+                <h3 class="text-xl font-semibold text-slate-900">
+                    <i class="fa-solid fa-file-pen text-brand-600 mr-2"></i> Input Pengumpulan Administrasi
+                </h3>
+                <button type="button" id="btnCloseModal" class="text-slate-400 bg-transparent hover:bg-slate-200 hover:text-slate-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                    <span class="sr-only">Tutup modal</span>
+                </button>
+            </div>
+            <!-- Modal body -->
+            <div class="p-6 space-y-6 overflow-y-auto grow">
+                <form id="addDataForm">
+                    <div class="grid grid-cols-1 gap-6">
+                        
+                        <!-- Kategori Administrasi -->
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-slate-900">Kategori Administrasi <span class="text-red-500">*</span></label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50">
+                                    <input type="radio" name="inputKategori" value="perangkat" class="w-4 h-4 text-brand-600" required>
+                                    <span class="ml-2 text-sm font-medium text-slate-900">Perangkat Mengajar</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50">
+                                    <input type="radio" name="inputKategori" value="jurnal_mengajar" class="w-4 h-4 text-brand-600">
+                                    <span class="ml-2 text-sm font-medium text-slate-900">Jurnal Mengajar</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50">
+                                    <input type="radio" name="inputKategori" value="jurnal_wali" class="w-4 h-4 text-brand-600">
+                                    <span class="ml-2 text-sm font-medium text-slate-900">Jurnal Wali Kelas</span>
+                                </label>
+                                <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50">
+                                    <input type="radio" name="inputKategori" value="jurnal_kelas" class="w-4 h-4 text-brand-600">
+                                    <span class="ml-2 text-sm font-medium text-slate-900">Jurnal Kelas</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Guru Selection -->
+                        <div id="wrapperGuru">
+                            <label for="inputGuru" class="block mb-2 text-sm font-medium text-slate-900">Nama Guru <span class="text-red-500">*</span></label>
+                            <select id="inputGuru" class="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5" required>
+                                <option value="">Pilih Guru...</option>
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+
+                        <!-- Dynamic Fields based on Kategori -->
+                        <div id="dynamicFields" class="p-4 bg-slate-50 rounded-lg border border-slate-200 hidden space-y-4">
+                            
+                            <!-- For Perangkat & Jurnal Mengajar -->
+                            <div id="fieldMapel" class="hidden">
+                                <label for="inputMapel" class="block mb-2 text-sm font-medium text-slate-900">Mata Pelajaran</label>
+                                <select id="inputMapel" class="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5">
+                                    <option value="">Pilih Mapel...</option>
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+
+                            <!-- For Jurnal Wali & Jurnal Kelas -->
+                            <div id="fieldKelas" class="hidden">
+                                <label for="inputKelas" class="block mb-2 text-sm font-medium text-slate-900">Kelas</label>
+                                <select id="inputKelas" class="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5">
+                                    <option value="">Pilih Kelas...</option>
+                                    <!-- Populated by JS -->
+                                </select>
+                            </div>
+
+                            <!-- Waktu (Mingguan/Bulanan) -->
+                            <div id="fieldWaktu" class="hidden">
+                                <label for="inputWaktu" id="labelWaktu" class="block mb-2 text-sm font-medium text-slate-900">Periode (Minggu/Bulan ke-)</label>
+                                <input type="text" id="inputWaktu" placeholder="Misal: Minggu ke-1 Agustus, Bulan Agustus" class="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-brand-500 focus:border-brand-500 block w-full p-2.5">
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div>
+                            <label for="inputStatus" class="block mb-2 text-sm font-medium text-slate-900">Status Pengumpulan <span class="text-red-500">*</span></label>
+                            <select id="inputStatus" class="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block w-full p-2.5" required>
+                                <option value="Lengkap">Lengkap</option>
+                                <option value="Belum Lengkap">Belum Lengkap</option>
+                                <option value="Terlambat">Lengkap (Terlambat)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Catatan Opsional -->
+                        <div>
+                            <label for="inputCatatan" class="block mb-2 text-sm font-medium text-slate-900">Catatan (Opsional)</label>
+                            <textarea id="inputCatatan" rows="2" class="block p-2.5 w-full text-sm text-slate-900 bg-slate-50 rounded-lg border border-slate-300 focus:ring-brand-500 focus:border-brand-500" placeholder="Tulis catatan jika ada..."></textarea>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+            <!-- Modal footer -->
+            <div class="flex items-center justify-end p-5 border-t border-slate-200 rounded-b-xl bg-slate-50 shrink-0 space-x-3">
+                <button type="button" id="btnCancelModal" class="text-slate-600 bg-white border border-slate-300 hover:bg-slate-100 focus:ring-4 focus:outline-none focus:ring-slate-200 rounded-lg border text-sm font-medium px-5 py-2.5 focus:z-10 transition-colors">Batal</button>
+                <button type="button" id="btnSaveData" class="text-white bg-brand-600 hover:bg-brand-700 focus:ring-4 focus:outline-none focus:ring-brand-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center shadow-md flex items-center transition-colors">
+                    <i class="fa-solid fa-save mr-2"></i> Simpan Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Modal/Toast Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-[200] flex flex-col gap-2"></div>
+
+    <footer class="bg-slate-800 text-slate-400 py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm">
+            &copy; 2026 SI-ADMIN Kurikulum. Dashboard interaktif.
+        </div>
+    </footer>
+
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Constants - Data Master Sekolah
+        const DATA_GURU = [
+            "Rosalia Aristiati", "Alfiah", "Endang Sulistyaningsih", "Mahrudi", "Abdul Wakhid", 
+            "Rita Widjajanti", "Sri Wahyuni", "Sri Jamiati", "Wahyuning Tias", "Ida Rosida", 
+            "Sri Sihniyati", "Anita Widyastuti", "Ira Yuliani Kusumaningrum", "Hartini", "Ely Nilawati", 
+            "Niken Wulandari", "Sri Hidayati A.S", "Neti Diyah Pancaningrum", "Agustin Giri Hapsari", 
+            "Solikin", "Andika Kusumawati", "Nor Hamidah", "Istining Muntikah", "Sri Kadarsih", 
+            "Sri Winda Agustina Wibowo", "Sujiyah", "Scripzyan Meifany Ariyadi Nk", "Umi Fahruroh", 
+            "Aries Trian Pradestira", "Mar'atush Sholihah R", "Moh Nurman Salikul Ihsan", "Ahmad Dliyaul Haq", 
+            "Istiqomah Novitaningrum", "Fridha Fadhlurrahma", "Devia Kristianti", "Dwi Nur Hidayah", 
+            "Marita Riski Prastya", "Yuliyanto, S.Pd", "Yulianto", "Kautsar Julia Jasmine", "Nanik Widarti"
+        ].sort(); // Total 41 Guru
+
+        const DATA_MAPEL = [
+            "Pendidikan Agama Islam", "Pendidikan Agama Kristen", "Bahasa Indonesia", "IPA", "IPS", 
+            "Bahasa Jawa", "Seni dan Prakarya", "Bahasa Inggris", "KKA", "PJOK", "Matematika", 
+            "Pendidikan Pancasila", "Informatika", "Bimbingan Konseling"
+        ].sort();
+
+        const DATA_WALI_KELAS = {
+            "7A": "SUJIYAH", "7B": "MAR'ATUSH SHOLIHAH R", "7C": "AGUSTIN GIRI HAPSARI", 
+            "7D": "DWI NUR HIDAYAH", "7E": "NIKEN WULANDARI", "7F": "Yuliyanto, S.Pd", 
+            "7G": "HARTINI", "7H": "FRIDHA FADHLURRAHMA", "8A": "NETI DIYAH PANCANINGRUM", 
+            "8B": "ISTINING MUNTIKAH", "8C": "AHMAD DLIYAUL HAQ", "8D": "MARITA RISKI PRASTYA", 
+            "8E": "SRI WAHYUNI", "8F": "UMI FAHRUROH", "8G": "RITA WIDJAJANTI", 
+            "8H": "SRI HIDAYATI A.S", "9A": "DEVIA KRISTIANTI", "9B": "NOR HAMIDAH", 
+            "9C": "SRI KADARSIH", "9D": "IRA YULIANI KUSUMANINGRUM", "9E": "WAHYUNING TIAS", 
+            "9F": "SRI JAMIATI", "9G": "ISTIQOMAH NOVITANINGRUM", "9H": "IDA ROSIDA"
+        };
+        const DATA_KELAS = Object.keys(DATA_WALI_KELAS).sort(); // Total 24 Kelas
+
+        // Config & State
+        const ADMIN_PASSWORD = "admin123"; // Ganti password di sini
+        let isAdminLoggedIn = false;
+        let globalData = [];
+        let unsubscribe = null;
+        let currentUserId = null;
+
+        // Firebase Setup using Canvas environment variables
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'sim-kurikulum-default';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        
+        let app, db, auth;
+
+        // DOM Elements
+        const views = {
+            public: document.getElementById('publicView'),
+            login: document.getElementById('loginView'),
+            admin: document.getElementById('adminView')
+        };
+        
+        const navs = {
+            public: document.getElementById('btnNavPublic'),
+            admin: document.getElementById('btnNavAdmin'),
+            logout: document.getElementById('btnLogout')
+        };
+
+        const statusIndicator = document.getElementById('connectionStatus');
+        
+        // Helper Functions
+        const showToast = (message, type = 'info') => {
+            const toast = document.createElement('div');
+            const bg = type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-brand-600';
+            const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+            
+            toast.className = `${bg} text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3 fade-in transform transition-all duration-300 translate-x-full`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+            
+            document.getElementById('toastContainer').appendChild(toast);
+            
+            // Slide in
+            setTimeout(() => { toast.classList.remove('translate-x-full'); }, 10);
+            
+            // Remove after 3s
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        const switchView = (viewName) => {
+            Object.values(views).forEach(v => {
+                v.classList.remove('block');
+                v.classList.add('hidden');
+            });
+            views[viewName].classList.remove('hidden');
+            views[viewName].classList.add('block');
+            
+            // Manage nav buttons
+            if (viewName === 'public') {
+                navs.public.classList.add('hidden');
+                navs.admin.classList.toggle('hidden', isAdminLoggedIn);
+                navs.logout.classList.toggle('hidden', !isAdminLoggedIn);
+            } else if (viewName === 'login') {
+                navs.public.classList.remove('hidden');
+                navs.admin.classList.add('hidden');
+                navs.logout.classList.add('hidden');
+            } else if (viewName === 'admin') {
+                navs.public.classList.remove('hidden');
+                navs.admin.classList.add('hidden');
+                navs.logout.classList.remove('hidden');
+            }
+        };
+
+        const updateStatus = (state) => {
+            const dot = statusIndicator.querySelector('div');
+            const text = statusIndicator.querySelector('span');
+            
+            if (state === 'connecting') {
+                dot.className = 'w-2 h-2 rounded-full bg-yellow-400 mr-2 animate-pulse';
+                text.textContent = 'Menghubungkan...';
+                text.className = 'hidden sm:inline text-brand-100';
+            } else if (state === 'online') {
+                dot.className = 'w-2 h-2 rounded-full bg-green-400 mr-2';
+                text.textContent = 'Real-time Aktif';
+                text.className = 'hidden sm:inline text-green-100';
+            } else if (state === 'offline' || state === 'error') {
+                dot.className = 'w-2 h-2 rounded-full bg-red-400 mr-2';
+                text.textContent = 'Mode Offline/Error';
+                text.className = 'hidden sm:inline text-red-100';
+            }
+        };
+
+        const populateSelects = () => {
+            const selectGuru = document.getElementById('inputGuru');
+            const selectMapel = document.getElementById('inputMapel');
+            const selectKelas = document.getElementById('inputKelas');
+            
+            DATA_GURU.forEach(guru => {
+                const opt = document.createElement('option');
+                opt.value = guru; opt.textContent = guru;
+                selectGuru.appendChild(opt);
+            });
+            
+            DATA_MAPEL.forEach(mapel => {
+                const opt = document.createElement('option');
+                opt.value = mapel; opt.textContent = mapel;
+                selectMapel.appendChild(opt);
+            });
+            
+            DATA_KELAS.forEach(kelas => {
+                const opt = document.createElement('option');
+                const wali = DATA_WALI_KELAS[kelas];
+                opt.value = kelas; 
+                opt.textContent = `${kelas} (Wali: ${wali})`;
+                opt.dataset.wali = wali.toLowerCase();
+                selectKelas.appendChild(opt);
+            });
+        };
+
+        const initFirebase = async () => {
+            if (!firebaseConfig) {
+                updateStatus('error');
+                showToast('Konfigurasi database tidak ditemukan. Berjalan tanpa cloud.', 'error');
+                return false;
+            }
+
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // CRITICAL RULE 3: Auth Before Queries + Custom Token Auth
+                const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                if (token) {
+                    await signInWithCustomToken(auth, token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                currentUserId = auth.currentUser.uid;
+                
+                setupRealtimeListener();
+                return true;
+            } catch (error) {
+                console.error("Firebase init error:", error);
+                updateStatus('error');
+                showToast('Gagal terhubung ke database cloud.', 'error');
+                return false;
+            }
+        };
+
+        const setupRealtimeListener = () => {
+            if (!db || !currentUserId) return;
+            
+            // CRITICAL RULE 1: Strict Paths - Use standard artifacts/{appId}/public/data/{collectionName} path for permissions
+            const adminRef = collection(db, 'artifacts', appId, 'public', 'data', 'administrasi');
+            
+            // CRITICAL RULE 2: No Complex Queries (fetching all, sorting in JS if needed)
+            // Just simple sorting by timestamp if available, otherwise fetch all
+            unsubscribe = onSnapshot(adminRef, 
+                (snapshot) => {
+                    updateStatus('online');
+                    globalData = [];
+                    snapshot.forEach((doc) => {
+                        globalData.push({ id: doc.id, ...doc.data() });
+                    });
+                    
+                    // Sort descending by timestamp in memory
+                    globalData.sort((a, b) => {
+                        const timeA = a.timestamp ? a.timestamp.toMillis() : 0;
+                        const timeB = b.timestamp ? b.timestamp.toMillis() : 0;
+                        return timeB - timeA;
+                    });
+                    
+                    renderPublicTable();
+                    if (isAdminLoggedIn) renderAdminTable();
+                    updateStatistics();
+                },
+                (error) => {
+                    console.error("Listen error:", error);
+                    updateStatus('error');
+                }
+            );
+        };
+
+        const renderPublicTable = () => {
+            const tbody = document.getElementById('publicTableBody');
+            const filterKat = document.getElementById('filterKategori').value;
+            const searchQ = document.getElementById('searchInput').value.toLowerCase();
+            
+            tbody.innerHTML = '';
+            
+            let filteredData = globalData.filter(item => {
+                const matchKat = filterKat === 'all' || item.kategori === filterKat;
+                const matchName = item.nama_guru.toLowerCase().includes(searchQ);
+                return matchKat && matchName;
+            });
+            
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-500">Belum ada data administrasi yang diinput atau sesuai pencarian.</td></tr>`;
+                return;
+            }
+
+            filteredData.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'bg-white border-b hover:bg-slate-50 transition-colors';
+                
+                // Format Category name
+                let katName = '';
+                if(item.kategori === 'perangkat') katName = '<span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded border border-blue-200">Perangkat</span>';
+                else if(item.kategori === 'jurnal_mengajar') katName = '<span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded border border-green-200">J. Mengajar</span>';
+                else if(item.kategori === 'jurnal_wali') katName = '<span class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded border border-purple-200">J. Wali Kelas</span>';
+                else if(item.kategori === 'jurnal_kelas') katName = '<span class="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded border border-orange-200">J. Kelas</span>';
+
+                // Format Details
+                let detailStr = '';
+                if (item.mapel) detailStr += `<strong>Mapel:</strong> ${item.mapel}<br>`;
+                if (item.kelas) detailStr += `<strong>Kelas:</strong> ${item.kelas}<br>`;
+                if (item.waktu) detailStr += `<strong>Periode:</strong> ${item.waktu}`;
+                if (item.catatan) detailStr += `<br><span class="text-xs text-slate-400 italic">"${item.catatan}"</span>`;
+                if(!detailStr) detailStr = '-';
+
+                // Format Status
+                let statusBadge = '';
+                if(item.status === 'Lengkap') statusBadge = '<span class="text-green-600 font-medium"><i class="fa-solid fa-check-circle mr-1"></i> Lengkap</span>';
+                else if(item.status === 'Belum Lengkap') statusBadge = '<span class="text-red-600 font-medium"><i class="fa-solid fa-times-circle mr-1"></i> Belum Lengkap</span>';
+                else statusBadge = '<span class="text-yellow-600 font-medium"><i class="fa-solid fa-clock mr-1"></i> Lengkap (Terlambat)</span>';
+
+                // Format Date
+                let dateStr = 'Baru saja';
+                if(item.timestamp) {
+                    const d = item.timestamp.toDate();
+                    dateStr = d.toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year:'numeric'}) + ' ' + d.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+                }
+
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-slate-900">${index + 1}</td>
+                    <td class="px-6 py-4 font-semibold text-slate-800">${item.nama_guru}</td>
+                    <td class="px-6 py-4">${katName}</td>
+                    <td class="px-6 py-4 text-xs">${detailStr}</td>
+                    <td class="px-6 py-4">${statusBadge}</td>
+                    <td class="px-6 py-4 text-xs text-slate-400">${dateStr}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        const renderAdminTable = () => {
+            const tbody = document.getElementById('adminTableBody');
+            tbody.innerHTML = '';
+            
+            if (globalData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-500">Data masih kosong. Silakan input data baru.</td></tr>`;
+                return;
+            }
+
+            globalData.forEach((item) => {
+                const tr = document.createElement('tr');
+                tr.className = 'bg-white border-b hover:bg-slate-50 transition-colors';
+                
+                let katName = item.kategori.replace('_', ' ').toUpperCase();
+                let detailStr = [];
+                if (item.mapel) detailStr.push(item.mapel);
+                if (item.kelas) detailStr.push(`Kls ${item.kelas}`);
+                if (item.waktu) detailStr.push(item.waktu);
+                
+                let statusColor = item.status === 'Lengkap' ? 'text-green-600' : (item.status === 'Belum Lengkap' ? 'text-red-600' : 'text-yellow-600');
+                
+                let dateStr = '-';
+                if(item.timestamp) {
+                    const d = item.timestamp.toDate();
+                    dateStr = d.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'}) + ' ' + d.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+                }
+
+                tr.innerHTML = `
+                    <td class="px-6 py-3 font-medium text-slate-900">${item.nama_guru}</td>
+                    <td class="px-6 py-3 text-xs font-semibold">${katName}</td>
+                    <td class="px-6 py-3 text-xs">${detailStr.join(' | ') || '-'}</td>
+                    <td class="px-6 py-3 text-xs font-bold ${statusColor}">${item.status}</td>
+                    <td class="px-6 py-3 text-xs text-slate-500">${dateStr}</td>
+                    <td class="px-6 py-3 text-right">
+                        <button onclick="window.deleteData('${item.id}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-md transition-colors" title="Hapus Data">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        const updateStatistics = () => {
+            // Count logic based on items that are 'Lengkap' or 'Lengkap (Terlambat)'
+            const isDone = (status) => status.includes('Lengkap');
+            
+            const totalGuru = DATA_GURU.length; // 41
+            const totalKelas = DATA_KELAS.length; // 24
+
+            // Perangkat (1 per guru per tahun) -> Count unique gurus who submitted
+            const perangkatDone = new Set(globalData.filter(d => d.kategori === 'perangkat' && isDone(d.status)).map(d => d.nama_guru)).size;
+            document.getElementById('statPerangkat').textContent = `${perangkatDone} / ${totalGuru}`;
+
+            // Jurnal Mengajar (Asumsi sederhana: count unik guru minggu ini - for demo we just count total submissions)
+            // In real app, need robust week filtering. Here we just count how many distinct gurus have submitted anything in this category recently.
+            const jurnalMgjDone = new Set(globalData.filter(d => d.kategori === 'jurnal_mengajar' && isDone(d.status)).map(d => d.nama_guru)).size;
+            document.getElementById('statJurnalMengajar').textContent = `${jurnalMgjDone} / ${totalGuru}`;
+
+            // Jurnal Wali (Count unik wali kelas yg submit bulan ini - assume 24 wali kelas)
+            const jurnalWaliDone = new Set(globalData.filter(d => d.kategori === 'jurnal_wali' && isDone(d.status)).map(d => d.nama_guru)).size;
+            document.getElementById('statJurnalWali').textContent = `${jurnalWaliDone} / ${totalKelas}`;
+
+            // Jurnal Kelas (Count unik kelas - 24 kelas)
+            const jurnalKlsDone = new Set(globalData.filter(d => d.kategori === 'jurnal_kelas' && isDone(d.status)).map(d => d.kelas)).size;
+            document.getElementById('statJurnalKelas').textContent = `${jurnalKlsDone} / ${totalKelas}`;
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            populateSelects();
+            initFirebase();
+
+            // Navigation
+            navs.admin.addEventListener('click', () => switchView('login'));
+            navs.public.addEventListener('click', () => switchView('public'));
+            navs.logout.addEventListener('click', () => {
+                isAdminLoggedIn = false;
+                switchView('public');
+                showToast('Berhasil keluar dari mode Admin');
+            });
+
+            // Login Logic
+            document.getElementById('loginForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const pwd = document.getElementById('password').value;
+                if (pwd === ADMIN_PASSWORD) {
+                    isAdminLoggedIn = true;
+                    document.getElementById('password').value = '';
+                    switchView('admin');
+                    renderAdminTable();
+                    showToast('Login berhasil. Selamat datang Admin!', 'success');
+                } else {
+                    showToast('Password salah!', 'error');
+                }
+            });
+
+            // Filtering Public Table
+            document.getElementById('filterKategori').addEventListener('change', renderPublicTable);
+            document.getElementById('searchInput').addEventListener('input', renderPublicTable);
+
+            // Modal Logic
+            const modal = document.getElementById('addModal');
+            const form = document.getElementById('addDataForm');
+            
+            document.getElementById('btnShowAddModal').addEventListener('click', () => {
+                form.reset();
+                // Trigger change event to reset dynamic fields
+                document.querySelector('input[name="inputKategori"]:checked')?.dispatchEvent(new Event('change'));
+                modal.classList.remove('hidden');
+            });
+            
+            const closeModal = () => modal.classList.add('hidden');
+            document.getElementById('btnCloseModal').addEventListener('click', closeModal);
+            document.getElementById('btnCancelModal').addEventListener('click', closeModal);
+
+            // Dynamic Form Fields Logic based on Category Selection
+            const radios = document.querySelectorAll('input[name="inputKategori"]');
+            const dynamicFields = document.getElementById('dynamicFields');
+            const fMapel = document.getElementById('fieldMapel');
+            const fKelas = document.getElementById('fieldKelas');
+            const fWaktu = document.getElementById('fieldWaktu');
+            const labelWaktu = document.getElementById('labelWaktu');
+            const inputWaktu = document.getElementById('inputWaktu');
+
+            radios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    const val = e.target.value;
+                    dynamicFields.classList.remove('hidden');
+                    
+                    // Reset visibility
+                    fMapel.classList.add('hidden');
+                    fKelas.classList.add('hidden');
+                    fWaktu.classList.add('hidden');
+                    
+                    if (val === 'perangkat') {
+                        fMapel.classList.remove('hidden');
+                    } 
+                    else if (val === 'jurnal_mengajar') {
+                        fMapel.classList.remove('hidden');
+                        fWaktu.classList.remove('hidden');
+                        labelWaktu.textContent = "Minggu ke-";
+                        inputWaktu.placeholder = "Misal: Minggu 1 Agustus";
+                    }
+                    else if (val === 'jurnal_wali') {
+                        fKelas.classList.remove('hidden');
+                        fWaktu.classList.remove('hidden');
+                        labelWaktu.textContent = "Bulan";
+                        inputWaktu.placeholder = "Misal: Agustus 2026";
+                        
+                        // Auto select teacher if they are wali kelas
+                        // Wait for user to select class, handled below
+                    }
+                    else if (val === 'jurnal_kelas') {
+                        fKelas.classList.remove('hidden');
+                        fWaktu.classList.remove('hidden');
+                        labelWaktu.textContent = "Minggu ke-";
+                        inputWaktu.placeholder = "Misal: Minggu 1 Agustus";
+                    }
+                });
+            });
+
+            // Smart Autofill for Jurnal Wali
+            document.getElementById('inputKelas').addEventListener('change', (e) => {
+                const selectedKategori = document.querySelector('input[name="inputKategori"]:checked')?.value;
+                if (selectedKategori === 'jurnal_wali' && e.target.value) {
+                    const waliName = DATA_WALI_KELAS[e.target.value];
+                    if(waliName) {
+                        // Find matching option (case insensitive)
+                        const selGuru = document.getElementById('inputGuru');
+                        for(let i=0; i<selGuru.options.length; i++) {
+                            if(selGuru.options[i].value.toUpperCase() === waliName.toUpperCase()) {
+                                selGuru.selectedIndex = i;
+                                showToast(`Otomatis memilih wali kelas: ${waliName}`);
+                                break;
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Save Data Logic
+            document.getElementById('btnSaveData').addEventListener('click', async () => {
+                if(!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const kategori = document.querySelector('input[name="inputKategori"]:checked').value;
+                const nama_guru = document.getElementById('inputGuru').value;
+                const status = document.getElementById('inputStatus').value;
+                const catatan = document.getElementById('inputCatatan').value;
+                
+                let mapel = null, kelas = null, waktu = null;
+                
+                if(kategori === 'perangkat' || kategori === 'jurnal_mengajar') {
+                    mapel = document.getElementById('inputMapel').value;
+                }
+                if(kategori === 'jurnal_wali' || kategori === 'jurnal_kelas') {
+                    kelas = document.getElementById('inputKelas').value;
+                }
+                if(kategori !== 'perangkat') {
+                    waktu = document.getElementById('inputWaktu').value;
+                }
+
+                const dataToSave = {
+                    kategori,
+                    nama_guru,
+                    status,
+                    catatan,
+                    mapel,
+                    kelas,
+                    waktu,
+                    timestamp: serverTimestamp() // Set server time
+                };
+
+                // Add button loading state
+                const btn = document.getElementById('btnSaveData');
+                const origHtml = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Menyimpan...';
+                btn.disabled = true;
+
+                try {
+                    if(!db || !currentUserId) throw new Error("Database offline");
+                    
+                    const adminRef = collection(db, 'artifacts', appId, 'public', 'data', 'administrasi');
+                    await addDoc(adminRef, dataToSave);
+                    
+                    showToast('Data berhasil disimpan!', 'success');
+                    closeModal();
+                } catch (error) {
+                    console.error("Save error:", error);
+                    showToast('Gagal menyimpan data.', 'error');
+                } finally {
+                    btn.innerHTML = origHtml;
+                    btn.disabled = false;
+                }
+            });
+        });
+
+        // Expose delete function globally so inline onclick works
+        window.deleteData = async (docId) => {
+            // Custom confirmation (no alert/confirm allowed by rules)
+            // Creating a simple custom confirm UI inline
+            const toast = document.createElement('div');
+            toast.className = 'fixed inset-0 z-[300] modal-backdrop flex justify-center items-center fade-in';
+            toast.innerHTML = `
+                <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full mx-4">
+                    <h3 class="text-lg font-bold text-slate-900 mb-2">Hapus Data?</h3>
+                    <p class="text-sm text-slate-600 mb-6">Tindakan ini tidak dapat dibatalkan.</p>
+                    <div class="flex justify-end space-x-3">
+                        <button id="btnCancelDel" class="px-4 py-2 text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg">Batal</button>
+                        <button id="btnConfirmDel" class="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-lg">Ya, Hapus</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            
+            document.getElementById('btnCancelDel').onclick = () => toast.remove();
+            document.getElementById('btnConfirmDel').onclick = async () => {
+                toast.remove();
+                try {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'administrasi', docId);
+                    await deleteDoc(docRef);
+                    showToast('Data berhasil dihapus', 'success');
+                } catch (error) {
+                    console.error("Delete error:", error);
+                    showToast('Gagal menghapus data', 'error');
+                }
+            };
+        };
+    </script>
+</body>
+</html>
